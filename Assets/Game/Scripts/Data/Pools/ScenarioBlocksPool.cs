@@ -1,0 +1,41 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace SC
+{
+    [CreateAssetMenu(fileName = "ScenarioBlocksPool", menuName = "Data/ScenarioBlocksPool")]
+    public class ScenarioBlocksPool : ScriptableObject, ILoadablePool
+    {
+        [SerializeField] private string _dataPath;
+
+        private Dictionary<int, ScenarioBlockPoolData> _scenarioBlocks;
+
+        public ScenarioBlockPoolData GetScenarioBlock(int id)
+        {
+            if (_scenarioBlocks.TryGetValue(id, out var dataValue))
+            {
+                return dataValue;
+            }
+
+            return null;
+        }
+
+        public void Load()
+        {
+            if (string.IsNullOrEmpty(_dataPath))
+            {
+                return;
+            }
+
+            _scenarioBlocks = new Dictionary<int, ScenarioBlockPoolData>();
+            var assets = Resources.LoadAll<ScenarioBlockPoolData>(_dataPath);
+
+            foreach (var a in assets)
+            {
+                _scenarioBlocks.Add(a.id, a);
+            }
+
+            Debug.Log($"[{name}] is loaded!");
+        }
+    }
+}
