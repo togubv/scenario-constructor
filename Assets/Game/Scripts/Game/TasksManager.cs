@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -6,6 +7,13 @@ namespace SC
 {
     public class TasksManager : MonoBehaviour
     {
+        public event Action<string, EventType, TaskStepStateType, int> EventStepTaskProcessed;
+        public event Action<int, ExecutionProcedureType, ScenarioBlockModeType, int> EventTaskGroupStarted;
+        public event Action<int> EventTaskGroupCompleted;
+
+        [SerializeField] private TasksLogger _gameEventsLogger;
+        [SerializeField] private bool _showTriggersDebug;
+
         private List<ScenarioBlockRuntimeData> _activeTasks = new ();
         private ScenarioBlockModeType _blockModeType;
         private TaskStepGroup _stepData;
@@ -15,7 +23,22 @@ namespace SC
         private int _mistakesAmount;
         private int _groupIndex;
 
-        public IEnumerator Start()
+        private void Awake()
+        {
+            _gameEventsLogger.Init(this);
+
+            //_gameEventsLogger = new TasksLogger(this, _showTriggersDebug);
+        }
+
+        private void OnDestroy()
+        {
+            if (_gameEventsLogger != null)
+            {
+                _gameEventsLogger.OnDestroy();
+            }
+        }
+
+        private IEnumerator Start()
         {
             yield return new WaitForSeconds(1f);
             
@@ -40,6 +63,12 @@ namespace SC
 
             _stepData = scenarioData.stepGroups[scenarioGroupIndex];
 
+            EventTaskGroupStarted?.Invoke(
+                scenarioData.id, 
+                _stepData.procedureType, 
+                _blockModeType, 
+                _stepData.examMistakesMaxAmount);
+
             if (_stepData.procedureType != ExecutionProcedureType.InRotation)
             {
                 _queueIndex = -1;
@@ -62,6 +91,8 @@ namespace SC
 
         private void StartNextStepsGroup()
         {
+            EventTaskGroupCompleted?.Invoke(_currentScenarioIndex);
+
             var scenarioData = Settings.Get<ScenarioBlocksPool>().
                 GetScenarioBlock(_currentScenarioIndex);
 
@@ -143,6 +174,7 @@ namespace SC
                         {
                             SetTaskState(_activeTasks[i], TaskStepStateType.Success);
                             _queueIndex += 1;
+                            _currentTryAmount = 0;
                             SetCurrentQueueTask(_queueIndex);
                         }
                         else
@@ -153,6 +185,7 @@ namespace SC
                             {
                                 SetTaskState(_activeTasks[_queueIndex], TaskStepStateType.Failed);
                                 _queueIndex += 1;
+                                _currentTryAmount = 0;
                                 SetCurrentQueueTask(_queueIndex);
                                 AddMistakesAmount();
                             }    
@@ -176,6 +209,16 @@ namespace SC
         {
             activeTask.state = state;
             UpdateActiveTasksVisual(activeTask);
+
+            if (state != TaskStepStateType.None)
+            {
+                EventStepTaskProcessed?.Invoke(
+                    activeTask.task.eventId,
+                    activeTask.task.conditionType,
+                    activeTask.state,
+                    _currentTryAmount
+                    );
+            }
         }
 
         private void AddTryAmount()

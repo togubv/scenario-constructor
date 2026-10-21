@@ -668,7 +668,7 @@ GameObject:
   - component: {fileID: 687094962}
   - component: {fileID: 687094964}
   - component: {fileID: 687094966}
-  - component: {fileID: 687094967}
+  - component: {fileID: 687094968}
   m_Layer: 0
   m_Name: Game
   m_TagString: Untagged
@@ -717,8 +717,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7c799c061bea8644bafe93882420d99, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SC.TasksManager
-  showTriggersDebug: 0
---- !u!114 &687094967
+  _gameEventsLogger: {fileID: 687094968}
+  _showTriggersDebug: 1
+--- !u!114 &687094968
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -729,8 +730,8 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c9367fd28cdd9fc4fadfda3f008858ee, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SC.GameEventsLogger
-  showTriggersDebug: 1
+  m_EditorClassIdentifier: Assembly-CSharp::SC.TasksLogger
+  _showTriggersDebug: 1
 --- !u!1 &802328428
 GameObject:
   m_ObjectHideFlags: 0
