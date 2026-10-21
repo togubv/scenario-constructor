@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
+using System.Collections;
+using UnityEngine;
 
 namespace SC
 {
@@ -25,6 +27,31 @@ namespace SC
         public void Hide()
         {
             _view.Hide();
+        }
+
+        public void SetTasksVisual(ScenarioBlockRuntimeData[] tasks, int queueIndex = -1)
+        {
+            _view.SetTasksVisual(tasks, queueIndex);
+        }
+
+        public void SetCurrentQueueTask(int queueIndex)
+        {
+            _view.SetCurrentQueueTask(queueIndex);
+        }
+
+        public void UpdateTaskState(ScenarioBlockRuntimeData task)
+        {
+            _view.UpdateTaskState(task);
+        }
+
+        public void ShowNotification(string notifText, float duration = 5f)
+        {
+            _view.ShowNotification(notifText, duration);
+        }
+
+        public void SetScenarioMode(ScenarioBlockModeType mode)
+        {
+            _view.SetScenarioMode(mode);
         }
     }
 }
