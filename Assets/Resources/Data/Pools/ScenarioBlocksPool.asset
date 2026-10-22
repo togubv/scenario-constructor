@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1049455b0d28847468578fbb94a61317, type: 3}
   m_Name: ScenarioBlocksPool
   m_EditorClassIdentifier: Assembly-CSharp::SC.ScenarioBlocksPool
-  _dataPath: Data/ScenarioBlocks
+  _dataPath: Data/Scenarios

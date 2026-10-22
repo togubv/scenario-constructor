@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace SC
 {
-    [CreateAssetMenu(fileName = "ScenarioBlocksPool", menuName = "Data/ScenarioBlocksPool")]
+    [CreateAssetMenu(fileName = "ScenarioBlocksPool", menuName = "Data/Pools/ScenarioBlocksPool")]
     public class ScenarioBlocksPool : ScriptableObject, ILoadablePool
     {
         [SerializeField] private string _dataPath;

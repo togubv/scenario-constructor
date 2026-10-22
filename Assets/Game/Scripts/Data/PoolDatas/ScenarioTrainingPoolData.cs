@@ -2,7 +2,7 @@
 
 namespace SC
 {
-    [CreateAssetMenu(fileName = "ScenarioTraining", menuName = "Data/ScenarioTraining")]
+    [CreateAssetMenu(fileName = "ScenarioTraining", menuName = "Data/Scenarios/ScenarioTraining")]
     public class ScenarioTrainingPoolData : ScenarioPoolData
     {
         [SerializeField] private TaskStepGroup[] _stepGroups;

@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace SC
 {
-    [CreateAssetMenu(fileName = "TaskStep", menuName = "Data/TaskStep")]
+    [CreateAssetMenu(fileName = "ScenarioStep", menuName = "Data/ScenarioStep")]
     public class TaskStep : ScriptableObject
     {
         [SerializeField] private string _eventId;

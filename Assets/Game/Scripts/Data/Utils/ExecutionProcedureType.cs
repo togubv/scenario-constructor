@@ -9,8 +9,5 @@ namespace SC
 
         [InspectorName("По очереди")]
         InRotation = 1,
-
-        [InspectorName("Смешанный")]
-        Mixed = 2
     }
 }
