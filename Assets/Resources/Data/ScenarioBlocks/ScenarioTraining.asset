@@ -9,21 +9,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 838a0575e09f48042ad70816374dcb49, type: 3}
-  m_Name: ScenarioBlock
-  m_EditorClassIdentifier: Assembly-CSharp::SC.ScenarioBlockPoolData
+  m_Script: {fileID: 11500000, guid: 64a914aad8c74114da74f4fe06a98202, type: 3}
+  m_Name: ScenarioTraining
+  m_EditorClassIdentifier: Assembly-CSharp::SC.ScenarioTrainingPoolData
   _id: 0
-  _blockModeType: 0
   _stepGroups:
   - _procedureType: 0
-    _examMistakesMaxAmount: 2
     _steps:
     - {fileID: 11400000, guid: b0ae538db34ecd74daadb53166dba5aa, type: 2}
     - {fileID: 11400000, guid: ab13e44e27601494e858817246f74638, type: 2}
     - {fileID: 11400000, guid: a2256cf16995e1a45a13c405c3ae551d, type: 2}
-  - _procedureType: 1
-    _examMistakesMaxAmount: 2
-    _steps:
-    - {fileID: 11400000, guid: a2256cf16995e1a45a13c405c3ae551d, type: 2}
-    - {fileID: 11400000, guid: ab13e44e27601494e858817246f74638, type: 2}
-    - {fileID: 11400000, guid: b0ae538db34ecd74daadb53166dba5aa, type: 2}
+    - {fileID: 11400000, guid: c58694e5db0f6c141be64c5c369f7509, type: 2}

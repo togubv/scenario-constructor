@@ -4,7 +4,8 @@ namespace SC
 {
     public class ColliderTrigger : MonoBehaviour
     {
-        public string id;
+        [SerializeField] private string id;
+        [SerializeField] private bool registerExit = false;
 
         private void OnTriggerEnter(Collider other)
         {
@@ -16,6 +17,11 @@ namespace SC
 
         private void OnTriggerExit(Collider other)
         {
+            if (registerExit == false)
+            {
+                return;
+            }
+
             if (other.CompareTag("Player"))
             {
                 EventBus.Raise(new GameEvent(EventType.ExitCollider, id));

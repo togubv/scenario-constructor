@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 60809f7411354564ebab26a8fd8ce44e, type: 3}
+  m_Name: AnalyzeSettingsDefault
+  m_EditorClassIdentifier: Assembly-CSharp::SC.AnalyzeSettingsData
+  _penaltyValues:
+  - _resultType: 2
+    _value: 10
+  - _resultType: 3
+    _value: 5
+  _scoreValues: 0a00000005000000

@@ -6,6 +6,7 @@ namespace SC
 {
     public class TasksLogger : MonoBehaviour
     {
+        [SerializeField] private ResultAnalyzer _resultAnalyzer;
         [SerializeField] private bool _showTriggersDebug;
 
         private TasksManager _taskManager;
@@ -21,14 +22,20 @@ namespace SC
 
             _taskManager.EventStepTaskProcessed += StepTaskProcessedHandler;
             _taskManager.EventTaskGroupStarted += TaskGroupStartedHandler;
-            _taskManager.EventTaskGroupCompleted += TaskGroupCompletedHandler;
+            _taskManager.EventScenarioCompleted += ScenarioCompletedHandler;
+            Menu.Get<GameController>().EventRecalculateAnalyze += RecalculateAnalyzeHandler;
         }
 
         public void OnDestroy()
         {
             _taskManager.EventStepTaskProcessed -= StepTaskProcessedHandler;
             _taskManager.EventTaskGroupStarted -= TaskGroupStartedHandler;
-            _taskManager.EventTaskGroupCompleted -= TaskGroupCompletedHandler;
+            _taskManager.EventScenarioCompleted -= ScenarioCompletedHandler;
+
+            if (Menu.Get<GameController>() != null)
+            {
+                Menu.Get<GameController>().EventRecalculateAnalyze -= RecalculateAnalyzeHandler;
+            }
         }
 
         private void StepTaskProcessedHandler(string eventId, 
@@ -60,12 +67,17 @@ namespace SC
                 case EventType.ButtonClicked:
                     log = $"Нажатие кнопки";
                     break;
+
+                case EventType.UnityEvent:
+                    log = $"Кастомное событие";
+                    break;
             }
 
             _currentLogs.Add(new TaskLogData
             {
                 timeStamp = timeStamp,
                 eventId = eventId,
+                description = log,
                 eventType = eventType,
                 taskStepState = taskStepState,
                 triesAmount = tries
@@ -77,25 +89,50 @@ namespace SC
             }
         }
 
-        private void TaskGroupStartedHandler(int id, 
+        private void TaskGroupStartedHandler(int contractVersion, int id, 
             ExecutionProcedureType procedureType, 
             ScenarioBlockModeType scenarioMode, 
             int examMistakesAmount)
         {
-            _currentGroup = new TaskGroupLogData() {
-                id = id,
-                procedureType = procedureType,
-                scenarioModeType = scenarioMode,
-                examMistakesMaxAmount = examMistakesAmount,
-            };
+            if (contractVersion == 1)
+            {
+                _currentGroup = new TaskGroupLogData()
+                {
+                    contractVersion = contractVersion,
+                    id = id,
+                    procedureType = procedureType,
+                    scenarioModeType = scenarioMode,
+                    examMistakesMaxAmount = examMistakesAmount,
+                };
+            }
+            else
+            {
+                Debug.LogWarning("Not found required contract version!");
+            }
         }
 
-        private void TaskGroupCompletedHandler(int id)
+        private void ScenarioCompletedHandler(int id)
         {
             _currentGroup.taskLogs = _currentLogs.ToArray();
+
+            if (_resultAnalyzer != null)
+            {
+                _resultAnalyzer.AnalyzeLogs(_currentGroup);
+            }
+
             _taskGroups.Add(_currentGroup);
             _currentLogs.Clear();
-            _currentGroup = default;
+        }
+
+        private void RecalculateAnalyzeHandler()
+        {
+            if (_resultAnalyzer != null)
+            {
+                if (_taskGroups != null && _taskGroups.Count > 0)
+                {
+                    _resultAnalyzer.AnalyzeLogs(_taskGroups[^1]);
+                }
+            }
         }
     }
 }

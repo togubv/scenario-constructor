@@ -8,11 +8,13 @@ namespace SC
     public class TasksManager : MonoBehaviour
     {
         public event Action<string, EventType, TaskStepStateType, int> EventStepTaskProcessed;
-        public event Action<int, ExecutionProcedureType, ScenarioBlockModeType, int> EventTaskGroupStarted;
-        public event Action<int> EventTaskGroupCompleted;
+        public event Action<int, int, ExecutionProcedureType, ScenarioBlockModeType, int> EventTaskGroupStarted;
+        public event Action<int> EventScenarioCompleted;
 
         [SerializeField] private TasksLogger _gameEventsLogger;
         [SerializeField] private bool _showTriggersDebug;
+        [SerializeField] private float _nextGroupStartDelay = 1f;
+        [SerializeField] private ScenarioPoolData[] _defaultScenarios;
 
         private List<ScenarioBlockRuntimeData> _activeTasks = new ();
         private ScenarioBlockModeType _blockModeType;
@@ -22,52 +24,46 @@ namespace SC
         private int _currentTryAmount;
         private int _mistakesAmount;
         private int _groupIndex;
+        private bool _isLoading;
 
         private void Awake()
         {
             _gameEventsLogger.Init(this);
-
-            //_gameEventsLogger = new TasksLogger(this, _showTriggersDebug);
-        }
-
-        private void OnDestroy()
-        {
-            if (_gameEventsLogger != null)
-            {
-                _gameEventsLogger.OnDestroy();
-            }
         }
 
         private IEnumerator Start()
         {
             yield return new WaitForSeconds(1f);
             
-            StartScenarioBlock(0);
+            StartScenario(0);
         }
 
-        private void StartScenarioBlock(int scenarioIndex)
+        private void StartScenario(int scenarioIndex)
         {
             _currentScenarioIndex = scenarioIndex;
 
-            var scenarioData = Settings.Get<ScenarioBlocksPool>().
-                GetScenarioBlock(scenarioIndex);
+            var scenarioData = _defaultScenarios[scenarioIndex];
+            SetScenarioMode(scenarioData.modeType);
 
             StartScenarioGroup(scenarioData, 0);
         }
 
-        private void StartScenarioGroup(ScenarioBlockPoolData scenarioData, int scenarioGroupIndex)
+        private void StartScenarioGroup(ScenarioPoolData scenarioData, int scenarioGroupIndex)
         {
             _groupIndex = scenarioGroupIndex;
             _currentTryAmount = 0;
             _activeTasks.Clear();
 
-            _stepData = scenarioData.stepGroups[scenarioGroupIndex];
+            if (scenarioData is ScenarioExamPoolData exam)
+            {
+                _stepData = exam.stepGroups[scenarioGroupIndex];
+            }
+            else
+            {
+                _stepData = scenarioData.stepGroups[scenarioGroupIndex];
+            }
 
-            EventTaskGroupStarted?.Invoke(
-                scenarioData.id, 
-                _stepData.procedureType, 
-                _blockModeType, 
-                _stepData.examMistakesMaxAmount);
+            ProcessingStartingGroup(scenarioData);
 
             if (_stepData.procedureType != ExecutionProcedureType.InRotation)
             {
@@ -77,6 +73,7 @@ namespace SC
             {
                 _queueIndex = 0;
             }
+
 
             for (int i = 0; i < scenarioData.stepGroups[_groupIndex].steps.Length; i++)
             {
@@ -91,21 +88,26 @@ namespace SC
 
         private void StartNextStepsGroup()
         {
-            EventTaskGroupCompleted?.Invoke(_currentScenarioIndex);
+            var currentScenario = _defaultScenarios[_currentScenarioIndex];
 
-            var scenarioData = Settings.Get<ScenarioBlocksPool>().
-                GetScenarioBlock(_currentScenarioIndex);
-
-            if (_groupIndex + 1 >= scenarioData.stepGroups.Length)
+            if (_groupIndex + 1 >= currentScenario.stepGroups.Length)
             {
-                SetScenarioMode(ScenarioBlockModeType.Exam);
-                StartScenarioGroup(scenarioData, 0);
-                Debug.Log("START EXAM!");
-                return;
+                EventScenarioCompleted?.Invoke(_currentScenarioIndex);
+
+                if (_currentScenarioIndex + 1 < _defaultScenarios.Length)
+                {
+                    StartScenario(_currentScenarioIndex + 1);
+                }
+                else
+                {
+                    _activeTasks.Clear();
+                    Menu.Get<GameController>().ClearTasksVisual();
+                }
             }
             else
             {
-                StartScenarioGroup(scenarioData, _groupIndex + 1);
+                _groupIndex += 1;
+                StartScenarioGroup(currentScenario, _groupIndex);                
             }
         }
 
@@ -147,6 +149,28 @@ namespace SC
             Menu.Get<GameController>().SetScenarioMode(_blockModeType);
         }
 
+        private void ProcessingStartingGroup(ScenarioPoolData scenarioData)
+        {
+            if (scenarioData.stepGroups is TaskStepGroupExam[] groupExam)
+            {
+                EventTaskGroupStarted?.Invoke(
+                    1,
+                    scenarioData.id,
+                    _stepData.procedureType,
+                    ScenarioBlockModeType.Exam,
+                    groupExam[_groupIndex].examMistakesMaxAmount);
+            }
+            else
+            {
+                EventTaskGroupStarted?.Invoke(
+                    1,
+                    scenarioData.id,
+                    _stepData.procedureType,
+                    ScenarioBlockModeType.Training,
+                    0);
+            }
+        }
+
         private void CompleteActiveTasks(GameEvent eventData)
         {
             if (_activeTasks == null || _activeTasks.Count == 0)
@@ -154,54 +178,76 @@ namespace SC
                 return;
             }
 
+            bool hasMistake = true;
+
             for (int i = 0; i < _activeTasks.Count; i++)
             {
                 if (_activeTasks[i].task.conditionType == eventData.eventType)
                 {
-                    if (_activeTasks[i].state != TaskStepStateType.None)
-                    {
-                        continue;
-                    }
+                    //if (_activeTasks[i].state != TaskStepStateType.None)
+                    //{
+                    //    continue;
+                    //}
+
+                    string taskEventId = _activeTasks[i].task.eventId;
 
                     if (_stepData.procedureType == ExecutionProcedureType.Free &&
-                        _activeTasks[i].task.eventId == eventData.id)
+                        taskEventId == eventData.id)
                     {
+                        hasMistake = false;
                         SetTaskState(_activeTasks[i], TaskStepStateType.Success);
                     }
                     else if (_stepData.procedureType == ExecutionProcedureType.InRotation)
                     {
-                        if (i == _queueIndex && _activeTasks[i].task.eventId == eventData.id)
+                        if (taskEventId == eventData.id)
                         {
-                            SetTaskState(_activeTasks[i], TaskStepStateType.Success);
-                            _queueIndex += 1;
-                            _currentTryAmount = 0;
-                            SetCurrentQueueTask(_queueIndex);
-                        }
-                        else
-                        {
-                            ShowNotification("ÍÅ ÏÎ Î×ÅÐÅÄÈ!");
-
-                            if (_blockModeType == ScenarioBlockModeType.Exam)
+                            if (i == _queueIndex)
                             {
-                                SetTaskState(_activeTasks[_queueIndex], TaskStepStateType.Failed);
+                                hasMistake = false;
+                                SetTaskState(_activeTasks[i], TaskStepStateType.Success);
                                 _queueIndex += 1;
                                 _currentTryAmount = 0;
                                 SetCurrentQueueTask(_queueIndex);
-                                AddMistakesAmount();
-                            }    
+                            }
                             else
                             {
-                                AddTryAmount();
+                                hasMistake = false;
+                                AddMistakeAmount();
+                                ShowNotification("ÍÅ ÏÎ Î×ÅÐÅÄÈ!");
                             }
-                            break;
                         }
                     }
-
-                    if (CurrentGroupIsDone())
-                    {
-                        StartNextStepsGroup();
-                    }
                 }
+            }
+
+            if (hasMistake)
+            {
+                AddMistakeAmount();
+                ShowNotification("ÎØÈÁÊÀ!");
+            }
+
+            if (CurrentGroupIsDone())
+            {
+                if (_isLoading == false)
+                {
+                    StartCoroutine(DelayedStartNextStepsGroup());
+                }
+            }
+        }
+
+        private void AddMistakeAmount()
+        {
+            if (_blockModeType == ScenarioBlockModeType.Exam)
+            {
+                SetTaskState(_activeTasks[_queueIndex], TaskStepStateType.Failed);
+                _queueIndex += 1;
+                _currentTryAmount = 0;
+                SetCurrentQueueTask(_queueIndex);
+                AddMistakesAmount();
+            }
+            else
+            {
+                AddTryAmount();
             }
         }
 
@@ -219,6 +265,8 @@ namespace SC
                     _currentTryAmount
                     );
             }
+
+            _currentTryAmount = 0;
         }
 
         private void AddTryAmount()
@@ -249,21 +297,38 @@ namespace SC
         private void AddMistakesAmount()
         {
             _mistakesAmount += 1;
-            
-            if (_mistakesAmount >= _stepData.examMistakesMaxAmount)
+
+            if (_stepData is TaskStepGroupExam examSteps)
             {
-                for (int i = 0; i < _activeTasks.Count; i++)
+                if (_mistakesAmount >= examSteps.examMistakesMaxAmount)
                 {
-                    if (_activeTasks[i].state == TaskStepStateType.None)
+                    for (int i = 0; i < _activeTasks.Count; i++)
                     {
-                        SetTaskState(_activeTasks[i], TaskStepStateType.Skipped);
+                        if (_activeTasks[i].state == TaskStepStateType.None)
+                        {
+                            SetTaskState(_activeTasks[i], TaskStepStateType.Skipped);
+                        }
+                    }
+
+                    SetCurrentQueueTask(-1);
+                    ShowNotification("ÍÅÓÄÀ×À!");
+
+                    if (_isLoading == false)
+                    {
+                        StartCoroutine(DelayedStartNextStepsGroup());
                     }
                 }
-
-                SetCurrentQueueTask(-1);
-                ShowNotification("ÍÅÓÄÀ×À!");
-                StartNextStepsGroup();
             }
+        }
+
+        private IEnumerator DelayedStartNextStepsGroup()
+        {
+            _isLoading = true;
+
+            yield return new WaitForSeconds(_nextGroupStartDelay);
+
+            StartNextStepsGroup();
+            _isLoading = false;
         }
     }
 }

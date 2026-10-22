@@ -314,7 +314,7 @@ MonoBehaviour:
   rb: {fileID: 2523330500311402676}
   cameraTrans: {fileID: 3533314688902713093}
   _mouseSensitivity: 0.1
-  _movespeed: 3
+  _movespeed: 5
 --- !u!1 &8369787401691504332
 GameObject:
   m_ObjectHideFlags: 0

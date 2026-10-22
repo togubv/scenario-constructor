@@ -8,9 +8,9 @@ namespace SC
     {
         [SerializeField] private string _dataPath;
 
-        private Dictionary<int, ScenarioBlockPoolData> _scenarioBlocks;
+        private Dictionary<int, ScenarioPoolData> _scenarioBlocks;
 
-        public ScenarioBlockPoolData GetScenarioBlock(int id)
+        public ScenarioPoolData GetScenarioBlock(int id)
         {
             if (_scenarioBlocks.TryGetValue(id, out var dataValue))
             {
@@ -27,8 +27,8 @@ namespace SC
                 return;
             }
 
-            _scenarioBlocks = new Dictionary<int, ScenarioBlockPoolData>();
-            var assets = Resources.LoadAll<ScenarioBlockPoolData>(_dataPath);
+            _scenarioBlocks = new Dictionary<int, ScenarioPoolData>();
+            var assets = Resources.LoadAll<ScenarioPoolData>(_dataPath);
 
             foreach (var a in assets)
             {

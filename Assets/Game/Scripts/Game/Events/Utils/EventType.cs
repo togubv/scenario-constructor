@@ -7,6 +7,7 @@ namespace SC
         ExitCollider = 2,
         EnterCollision = 3,
         ExitCollision = 5,
-        ButtonClicked = 6
+        ButtonClicked = 6,
+        UnityEvent = 7
     }
 }
